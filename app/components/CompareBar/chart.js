@@ -70,13 +70,22 @@ class Timegraph extends Component {
 
   componentDidUpdate() {
     const { vis } = this.state
-    const { data, before, after } = this.props
+    const { data, data_ohsome, before, after } = this.props
 
     if (vis) {
       // update data in case it changed
       this.props.layers.forEach(filter => {
-        vis.data(filter.name+'_data').remove(() => true).insert(data[filter.name] && data[filter.name].filter(x => x) || [])
+        vis.data(filter.name+'_data')
+        .remove(() => true)
+        .insert(data[filter.name] && data[filter.name].filter(x => x) || [])
       })
+
+      this.props.layers.forEach(filter => {
+        vis.data(filter.name+'_data-ohsome')
+        .remove(() => true)
+        .insert(data_ohsome[filter.name] && data_ohsome[filter.name].filter(x => x) || [])
+      });
+
       // update before/after drag markers
       let beforeTimestamp = +timeOptions.find(timeOption => timeOption.id === before).timestamp
       if (vis.signal('before_drag') !== beforeTimestamp) {
@@ -197,7 +206,10 @@ class Timegraph extends Component {
     styleSpec.data = filters.map(filter => ({
       "name": filter+"_data",
       "format": {"type": "json", "parse": {"day": "date"}}
-    }))
+    })).concat(filters.map(filter => ({
+      "name": filter+"_data-ohsome",
+      "format": {"type": "json", "parse": {"day": "date"}}
+    })))
     styleSpec.scales = styleSpec.scales.concat(
       filters.map(filter => ({
         "name": filter+"_y",
@@ -209,6 +221,22 @@ class Timegraph extends Component {
     styleSpec.marks = styleSpec.marks.concat(filters.map(filter => ({
       "type": "line",
       "from": {"data": filter+"_data"},
+      "properties": {
+        "enter": {
+          "interpolate": {"value": "cardinal"},
+          "tension": {"value": 0.8},
+          "stroke": {"value": "#FDB863"},
+          "strokeWidth": {"value": 2},
+          "strokeDash": {"value": [5, 2]}
+        },
+        "update": {
+          "x": {"scale": "x", "field": "day"},
+          "y": {"scale": filter+"_y", "field": "value"}
+        }
+      }
+    })),filters.map(filter => ({
+      "type": "line",
+      "from": {"data": filter+"_data-ohsome"},
       "properties": {
         "enter": {
           "interpolate": {"value": "cardinal"},

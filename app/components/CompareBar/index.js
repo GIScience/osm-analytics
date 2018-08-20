@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import { bindActionCreators } from 'redux'
 import { connect } from 'react-redux'
 import { queue } from 'd3-queue'
-import { polygon } from 'turf'
+import { polygon, featurecollection } from 'turf'
 import * as MapActions from '../../actions/map'
 import * as StatsActions from '../../actions/stats'
 import { compareTimes as timeOptions } from '../../settings/options'
@@ -77,7 +77,13 @@ class CompareBar extends Component {
           <button className="compare-toggle" onClick={::this.disableCompareView}>Close Comparison View</button>
         </div>
 
-        <Chart layers={this.props.layers} before={this.props.map.times[0]} after={this.props.map.times[1]} data={this.state.featureCounts}/>
+        <Chart
+          layers={this.props.layers}
+          before={this.props.map.times[0]}
+          after={this.props.map.times[1]}
+          data={this.state.featureCounts}
+          data_ohsome={this.state.ohsomeFeatureCounts}
+        />
       </div>
     )
   }
@@ -97,18 +103,45 @@ class CompareBar extends Component {
   }
 
   update(region, filters) {
-    const filter = filters[0]
     regionToCoords(region)
-    .then((function(region) {
-      this.setState({ updating: true, featureCounts: {} })
+    .then((function(regionPolygon) {
+      this.setState({ updating: true, featureCounts: {}, ohsomeFeatureCounts: {} })
       var q = queue()
       var featureCounts = {}
+      var ohsomeFeatureCounts = {}
       filters.forEach(filter => {
+        ohsomeFeatureCounts[filter] = []
+        let mode = filter === "highways" || filter === "waterways" ? "length" : "count"
+        let ohsomeApiRequestUrl = "https://api.ohsome.org/v0.9/elements/" + mode
+          + "?time=2008-01-01%2F%2FP1M"
+          + "&types=" + (filter === 'amenities' ? 'node,way' : 'way')
+          + "&keys=" + (filter === 'amenities' ? 'amenity' : filter.substr(0, filter.length-1))
+        switch(region.type) {
+          case "bbox":
+            ohsomeApiRequestUrl += "&bboxes="+region.coords.join(",")
+            break;
+          case "polygon":
+          case "hot":
+            ohsomeApiRequestUrl += "&bpolys=" + encodeURIComponent(JSON.stringify(featurecollection([regionPolygon])))
+            break;
+        }
+        fetch(ohsomeApiRequestUrl)
+        .then(res => res.json())
+        .then(res => {
+          if (res.status && res.status !== 200) return // error from ohsome api
+          ohsomeFeatureCounts[filter] = res.result.map(entry => ({
+            day: +(new Date(entry.timestamp)),
+            value: entry.value * (mode === "length" ? 0.001 : 1)
+          }))
+          this.setState({
+            ohsomeFeatureCounts
+          })
+        })
         featureCounts[filter] = []
         timeOptions.forEach((timeOption, timeIdx) => {
           if (timeOption.layers && timeOption.layers.indexOf(filter) == -1) return
-          q.defer(function(region, filter, time, callback) {
-            searchFeatures(region, filter, time, function(err, data) {
+          q.defer(function(regionPolygon, filter, time, callback) {
+            searchFeatures(regionPolygon, filter, time, function(err, data) {
               if (err) callback(err)
               else {
                 featureCounts[filter][timeIdx] = {
@@ -121,7 +154,7 @@ class CompareBar extends Component {
                 callback(null)
               }
             })
-          }, region, filter, timeOption.id)
+          }, regionPolygon, filter, timeOption.id)
         })
       })
       q.awaitAll(function(err) {
