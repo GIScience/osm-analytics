@@ -78,13 +78,30 @@ class Timegraph extends Component {
         vis.data(filter.name+'_data')
         .remove(() => true)
         .insert(data[filter.name] && data[filter.name].filter(x => x) || [])
+
+        var lineData = data[filter.name]
+        if (data_ohsome[filter.name]) {
+          lineData = [].concat(
+            data[filter.name].filter(x =>
+              x.day < data_ohsome[filter.name][0].day
+            ),
+            data_ohsome[filter.name],
+            data[filter.name].filter(x =>
+              x.day > data_ohsome[filter.name][data_ohsome[filter.name].length-1].day
+            )
+          )
+        }
+
+        vis.data(filter.name+'_data-estimated')
+        .remove(() => true)
+        .insert(lineData && lineData.filter(x => x) || [])
       })
 
       this.props.layers.forEach(filter => {
-        vis.data(filter.name+'_data-ohsome')
+        vis.data(filter.name+'_data-line')
         .remove(() => true)
         .insert(data_ohsome[filter.name] && data_ohsome[filter.name].filter(x => x) || [])
-      });
+      })
 
       // update before/after drag markers
       let beforeTimestamp = +timeOptions.find(timeOption => timeOption.id === before).timestamp
@@ -207,7 +224,10 @@ class Timegraph extends Component {
       "name": filter+"_data",
       "format": {"type": "json", "parse": {"day": "date"}}
     })).concat(filters.map(filter => ({
-      "name": filter+"_data-ohsome",
+      "name": filter+"_data-estimated",
+      "format": {"type": "json", "parse": {"day": "date"}}
+    }))).concat(filters.map(filter => ({
+      "name": filter+"_data-line",
       "format": {"type": "json", "parse": {"day": "date"}}
     })))
     styleSpec.scales = styleSpec.scales.concat(
@@ -220,7 +240,7 @@ class Timegraph extends Component {
     )
     styleSpec.marks = styleSpec.marks.concat(filters.map(filter => ({
       "type": "line",
-      "from": {"data": filter+"_data"},
+      "from": {"data": filter+"_data-estimated"},
       "properties": {
         "enter": {
           "interpolate": {"value": "cardinal"},
@@ -236,7 +256,7 @@ class Timegraph extends Component {
       }
     })),filters.map(filter => ({
       "type": "line",
-      "from": {"data": filter+"_data-ohsome"},
+      "from": {"data": filter+"_data-line"},
       "properties": {
         "enter": {
           "interpolate": {"value": "cardinal"},
