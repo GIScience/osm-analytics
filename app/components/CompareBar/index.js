@@ -5,6 +5,7 @@ import { queue } from 'd3-queue'
 import { polygon, featurecollection } from 'turf'
 import * as MapActions from '../../actions/map'
 import * as StatsActions from '../../actions/stats'
+import { mapParameterChanged } from '../../reducers/map'
 import { compareTimes as timeOptions } from '../../settings/options'
 import unitSystems from '../../settings/unitSystems'
 import regionToCoords from '../Map/regionToCoords'
@@ -96,8 +97,7 @@ class CompareBar extends Component {
 
   componentWillReceiveProps(nextProps) {
     // check for changed map parameters
-    if (nextProps.map.region !== this.props.map.region
-      || nextProps.map.filters !== this.props.map.filters) {
+    if (mapParameterChanged(nextProps.map, this.props.map, ['region', 'filters'])) {
       ::this.update(nextProps.map.region, nextProps.map.filters)
     }
   }
@@ -112,7 +112,7 @@ class CompareBar extends Component {
       filters.forEach(filter => {
         ohsomeFeatureCounts[filter] = []
         let mode = filter === "highways" || filter === "waterways" ? "length" : "count"
-        let ohsomeApiRequestUrl = "https://api.ohsome.org/v0.9/elements/" + mode
+        let ohsomeApiRequestUrl = "https://api.ohsome.org/v0.9-ignite-dev/elements/" + mode
           + "?time=2008-01-01%2F%2FP1M"
           + "&types=" + (filter === 'amenities' ? 'node,way' : 'way')
           + "&keys=" + (filter === 'amenities' ? 'amenity' : filter.substr(0, filter.length-1))

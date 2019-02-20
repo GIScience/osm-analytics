@@ -7,6 +7,7 @@ import { queue } from 'd3-queue'
 import moment from 'moment'
 import * as MapActions from '../../actions/map'
 import * as StatsActions from '../../actions/stats'
+import { mapParameterChanged } from '../../reducers/map'
 import OverlayButton from '../OverlayButton'
 import UnitSelector from '../UnitSelector'
 import Histogram from './chart'
@@ -236,8 +237,7 @@ class Stats extends Component {
 
   componentWillReceiveProps(nextProps) {
     // check for changed map parameters
-    if (nextProps.map.region !== this.props.map.region
-      || nextProps.map.filters !== this.props.map.filters) {
+    if (mapParameterChanged(nextProps.map, this.props.map, ['region', 'filters'])) {
       ::this.update(nextProps.map.region, nextProps.map.filters)
     }
   }

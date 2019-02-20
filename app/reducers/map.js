@@ -170,6 +170,7 @@ function updateURL(state) {
   if (region !== null) {
     switch (region.type) {
     case 'bbox':
+      region.coords = region.coords.map(x => x.toFixed(5)).map(Number)
       history.replace('/'+view
         +'/bbox:'
         +region.coords.map(x => x.toFixed(5)).join(',')
@@ -253,4 +254,8 @@ function defaultFilters(view) {
     case 'gaps-region':
       return defaults.gapsFilters
   }
+}
+
+export function mapParameterChanged(a, b, props) {
+  return props.some(prop => JSON.stringify(a[prop]) !== JSON.stringify(b[prop]));
 }

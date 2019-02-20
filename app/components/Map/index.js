@@ -8,6 +8,7 @@ import Legend from '../Legend'
 import { bindActionCreators } from 'redux'
 import { connect } from 'react-redux'
 import * as MapActions from '../../actions/map'
+import { mapParameterChanged } from '../../reducers/map'
 import { bboxPolygon, area, erase } from 'turf'
 import { debounce } from 'lodash'
 import regionToCoords from './regionToCoords'
@@ -152,7 +153,7 @@ class Map extends Component {
       this.props.actions.setTimesFromUrl(nextProps.times)
     }
     // check for changed map parameters
-    if (nextProps.map.region !== this.props.map.region) {
+    if (mapParameterChanged(nextProps.map, this.props.map, ['region'])) {
       this.mapSetRegion(nextProps.map.region, nextProps.embed === false, nextProps.embed === false)
     }
     const nextActiveLayer = layers.find(layer => layer.name === nextProps.map.filters[0])

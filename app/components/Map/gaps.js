@@ -10,6 +10,7 @@ import DropdownButton from '../DropdownButton'
 import { bindActionCreators } from 'redux'
 import { connect } from 'react-redux'
 import * as MapActions from '../../actions/map'
+import { mapParameterChanged } from '../../reducers/map'
 import { bboxPolygon, area, erase } from 'turf'
 import { debounce } from 'lodash'
 import regionToCoords from './regionToCoords'
@@ -162,7 +163,7 @@ class GapsMap extends Component {
       this.props.actions.setTimesFromUrl(nextProps.times)
     }
     // check for changed map parameters
-    if (nextProps.map.region !== this.props.map.region) {
+    if (mapParameterChanged(nextProps.map, this.props.map, ['region'])) {
       this.mapSetRegion(nextProps.map.region, nextProps.embed === false, nextProps.embed === false)
     }
     if (nextProps.map.filters.join() !== this.props.map.filters.join()) { // todo: handle this in reducer?
