@@ -112,7 +112,7 @@ class CompareBar extends Component {
       filters.forEach(filter => {
         ohsomeFeatureCounts[filter] = []
         let mode = filter === "highways" || filter === "waterways" ? "length" : "count"
-        let ohsomeApiRequestUrl = "https://api.ohsome.org/v0.9-ignite-dev/elements/" + mode
+        let ohsomeApiRequestUrl = "https://api.ohsome.org/v0.9/elements/" + mode
           + "?time=2008-01-01%2F%2FP1M"
           + "&types=" + (filter === 'amenities' ? 'node,way' : 'way')
           + "&keys=" + (filter === 'amenities' ? 'amenity' : filter.substr(0, filter.length-1))
