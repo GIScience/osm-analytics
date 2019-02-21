@@ -82,11 +82,11 @@ class Timegraph extends Component {
         var lineData = data[filter.name]
         if (data_ohsome[filter.name]) {
           lineData = [].concat(
-            data[filter.name].filter(x =>
+            (data[filter.name] || []).filter(x =>
               x.day < data_ohsome[filter.name][0].day
             ),
             data_ohsome[filter.name],
-            data[filter.name].filter(x =>
+            (data[filter.name] || []).filter(x =>
               x.day > data_ohsome[filter.name][data_ohsome[filter.name].length-1].day
             )
           )
